@@ -25,7 +25,7 @@ def set_up_environment(size = 5):
 
     environment[goal_pos[0], goal_pos[1]] = 2
 
-    number_of_obstacles = (random.randint(1, int(np.ceil(size * size)/10)))
+    number_of_obstacles = int(np.ceil(size * size)/10)
     print(number_of_obstacles)
     for i in range(number_of_obstacles):
         obstacle_pos = [random.randint(0, size - 1), random.randint(0, size - 1)]
@@ -156,8 +156,8 @@ def q_learning(gamma, alpha, episodes, environment_size):
 
     original_environment = set_up_environment(environment_size)
     reward_values = get_reward_matrix(original_environment)
-    print("El nuevo ambiente es: \n", original_environment)
-    input("Presione enter para iniciar")
+    print("Environment: \n", original_environment)
+    input("Press enter to start!")
 
     for i in range(episodes):
         #reset the env
@@ -169,6 +169,7 @@ def q_learning(gamma, alpha, episodes, environment_size):
         
         last_pos = get_agent_pos(environment)
         goal_pos = get_goal_pos(environment)
+        count_steps = 0
         while(not reached_goal(goal_pos, last_pos)):
             last_state = get_state(last_pos[0], last_pos[1], action_space-1)
             greed_or_not = np.random.random_sample()
@@ -183,38 +184,42 @@ def q_learning(gamma, alpha, episodes, environment_size):
                 action = np.random.randint(0, action_space)
           
             while not can_move(last_pos, action, environment):
-                if(greed_or_not <= epsilon):
-                    #greed
-                    #print("Greeding")
-                    aux_Q = Q.copy()
-                    aux_Q[last_state, action] = -100000
-                    action = np.argmax(aux_Q[last_state, :])
+                action = np.random.randint(0, action_space)
+                
+                #aux_Q = Q.copy()
+                #aux_Q[last_state, action] = -100000
+                #if(greed_or_not <= epsilon):
+                #    #greed
+                #    action = np.argmax(aux_Q[last_state, :])        
+                #else:
+                #    #explore
+                #    action = np.random.randint(0, action_space)
+                
 
-                    if aux_Q[last_state, : ].all() == -100000:
-                        greed_or_not = 1 - epsilon
-                else:
-                    #explore
-                    #print("Exploring")
-                    action = np.random.randint(0, action_space)
-
+                #if aux_Q[last_state, : ].all() == -100000:
+                #        greed_or_not = 1 - epsilon
+                #        print("Rip 1 if")
+                #        action = np.random.randint(0, action_space)
             next_state, reward, next_pos = step(action, last_pos, reward_values, action_space)
 
             Q[last_state, action] = Q[last_state, action] + alpha * (reward + gamma * np.max(Q[next_state, : ]) - Q[last_state, action])
             current_reward += reward
-            #print(updateEnv(last_pos, next_pos, environment))
+            print(updateEnv(last_pos, next_pos, environment))
             last_pos = next_pos
             last_state = next_state
-            
+            count_steps += 1
             #input("Mover al jugador\n")
-        if i % 100 == 0:
-            print("\nEpisode: {0} \nTotal reward: {1} \nEpsilon: {2}".format(i, current_reward, epsilon))
+        if i % 50 == 0:
             print(np.around(Q, decimals=2))
+            print("\nEpisode: {0} \nTotal reward: {1} \nEpsilon: {2}".format(i, current_reward, epsilon))
+            print("Steps to reach goal: ", count_steps)
+            input("Start next 50 episodes?")
         
         current_reward = 0
 
 
 def main():
-    q_learning(0.1, 0.9, 2000, 6)
+    q_learning(0.1, 0.9, 2000, 10)
 
 if __name__ == "__main__":
     main()
